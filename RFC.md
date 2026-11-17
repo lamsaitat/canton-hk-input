@@ -375,3 +375,25 @@ C:\Users\kuro\Dev\canton-im\
 >    - Switch active input method away from CantonHK, run `regsvr32 /u`, rename any locked old DLL to `canton_ime.dll.old.<timestamp>` (Windows allows renaming a mapped DLL on NTFS even while loaded in memory!), copy the new `canton_ime.dll` into place, and re-run `regsvr32`, OR
 >    - Do 95% of engine & UI iteration inside `canton-cli` and the standalone UI test runner before touching `regsvr32`.
 > 3. **Never Call `panic!` / Unhandled Exceptions Across COM Boundaries:** Every COM method in `canton-tsf` must catch panics/exceptions (`std::panic::catch_unwind` in Rust or `try/catch` in C++) and return `E_FAIL` rather than unwinding across the FFI boundary into `explorer.exe`.
+
+---
+
+## 9. Roadmap & Future Considerations
+
+### 9.1 Source-Agnostic Generalization vs. Single-Table Focus
+A recurring architectural question is whether to decouple the engine from `cantonhk.cin` into a generic, runtime-loaded `.cin` framework (potentially split across two repositories).
+
+- **Current Recommendation — Keep Single-Repo, Build-Time Embedded Design:**
+  1. **Zero-I/O AppContainer Immunity:** Embedding the compiled lexicon in `.rdata` eliminates runtime file-permission failures inside Windows 10/11 UWP/Edge/Start Menu sandboxes and avoids needing a background IPC server (unlike PIME or Rime/Weasel).
+  2. **Avoids Reinventing Generic `.cin` Dialect Flags:** Each `.cin` table has idiosyncratic rules (e.g., `cantonhk.cin`'s unused `%endkey 123456`, undeclared punctuation keys in `%keyname`, Apple `U+F87D` PUA hints, and toneless predictive completions).
+- **Recommended Evolution Path (If Supporting Multiple `.cin` Tables Later):**
+  - Instead of runtime `.cin` parsing or splitting into two repositories, keep the compile-time `.rdata` embedding architecture and parameterize `build.rs` via a small `profile.toml` (or environment variables):
+    - `cin_path` — path to any `.cin` table
+    - `display_name` — Windows Language Bar / Settings profile name
+    - `lang_id` — target Windows `LANGID` (e.g., `0x0404` or `0x0C04`)
+    - `guid_seed` — deterministic seed to derive unique `CLSID` / `GUID_PROFILE` identifiers per compiled IME
+  - This achieves clean source-code separation (allowing any `.cin` table to be plugged in at build time) while preserving single-file portable distribution (`CantonHK-Setup.exe`) and zero runtime disk I/O.
+
+### 9.2 Other Future Enhancements
+- **Optional User Frequency / MRU Learning (SDR-07):** Lightweight per-syllable MRU boost stored in `%LocalAppData%\CantonHK\user_freq.bin` (gracefully read-only in strict AppContainers).
+- **Optional `x86` (32-bit) Installer Bundling:** Include `i686` DLL alongside `x64` inside `CantonHK-Setup.exe` when compiled with a 32-bit MinGW or MSVC toolchain for legacy 32-bit applications.
