@@ -121,6 +121,10 @@ fn perform_install(silent: bool) -> Result<(), String> {
         let _ = run_regsvr32(&dll_path, true);
         remove_or_rename_locked(&dll_path);
     }
+    let ico_path = install_root.join("x64").join("cantonhk.ico");
+    if ico_path.exists() {
+        let _ = fs::remove_file(&ico_path);
+    }
 
     fs::create_dir_all(&x64_dir).map_err(|e| format!("Failed to create install folder: {e}"))?;
     fs::write(&dll_path, EMBEDDED_DLL_X64)
@@ -161,6 +165,10 @@ fn perform_uninstall(silent: bool) -> Result<(), String> {
     if dll_path.exists() {
         let _ = run_regsvr32(&dll_path, true);
         remove_or_rename_locked(&dll_path);
+    }
+    let ico_path = install_root.join("x64").join("cantonhk.ico");
+    if ico_path.exists() {
+        let _ = fs::remove_file(&ico_path);
     }
 
     delete_uninstall_registry();
