@@ -69,6 +69,7 @@ Once installed, press **`Win + Space`** and select **`CantonHK (廣東拼音)`**
 This engine is designed to compile the classic **CantonHK (港式廣東話)** `.cin` phonetic table:
 - **Original Table Compilation:** **Hong Kong Senior Citizens Information World (香港長者資訊天地)** — *CantonHK (港式廣東話)*.
 - **Upstream Packaging & Distribution:** **Tung-Han Hsieh (`thhsieh`)** and the **XCIN / `chinese-opendesktop` (`cin-tables`)** project (originally imported into `xcin` CVS on December 9, 2000 under the GNU General Public License).
+- **Encoding Conversion:** The Big5-to-UTF-8 conversion of the `cantonhk.cin` table used to build this project was performed by the repository author.
 
 ## License
 

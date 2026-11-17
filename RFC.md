@@ -25,6 +25,8 @@ If you are an LLM coding agent picking up this project, read this section first:
 
 ## 2. Forensic Analysis of `cantonhk.cin`
 
+> **Provenance:** Originally compiled by *Hong Kong Senior Citizens Information World (香港長者資訊天地)* and distributed via XCIN / `chinese-opendesktop` (`cin-tables`) by Tung-Han Hsieh (`thhsieh`) under GPL. The Big5-to-UTF-8 conversion of `cantonhk.cin` was performed by the project author.
+
 Any agent modifying the parser or state machine **must** understand the exact empirical properties of `cantonhk.cin` discovered during static analysis:
 
 ### 2.1 File Metrics & Header Directives
