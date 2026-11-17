@@ -239,7 +239,7 @@ impl CandidateWindow {
             let scale = dpi / 96.0;
 
             let rows = page.items.len().max(1) as f32;
-            let width_dip = 220.0_f32;
+            let width_dip = 240.0_f32;
             let header_h_dip = 32.0_f32;
             let row_h_dip = 30.0_f32;
             let pad_bottom_dip = 6.0_f32;
@@ -526,9 +526,34 @@ unsafe fn paint_window(hwnd: HWND, inner: &mut WindowInner) {
             windows::Win32::Graphics::DirectWrite::DWRITE_MEASURING_MODE_NATURAL,
         );
 
-        let cand_w: Vec<u16> = item.encode_utf16().collect();
+        let mut cand_left = 38.0_f32;
+        if !item.suffix.is_empty() {
+            let suffix_w: Vec<u16> = item.suffix.encode_utf16().collect();
+            let suffix_width = (item.suffix.len() as f32 * 8.5 + 8.0).min(70.0);
+            let suffix_rect = D2D_RECT_F {
+                left: cand_left,
+                top,
+                right: cand_left + suffix_width,
+                bottom,
+            };
+            rt.DrawText(
+                &suffix_w,
+                &inner.text_format_header,
+                &suffix_rect,
+                if is_selected {
+                    &brush_accent_text
+                } else {
+                    &brush_muted
+                },
+                windows::Win32::Graphics::Direct2D::D2D1_DRAW_TEXT_OPTIONS_NONE,
+                windows::Win32::Graphics::DirectWrite::DWRITE_MEASURING_MODE_NATURAL,
+            );
+            cand_left += suffix_width;
+        }
+
+        let cand_w: Vec<u16> = item.text.encode_utf16().collect();
         let cand_rect = D2D_RECT_F {
-            left: 38.0,
+            left: cand_left,
             top,
             right: size.width - 12.0,
             bottom,

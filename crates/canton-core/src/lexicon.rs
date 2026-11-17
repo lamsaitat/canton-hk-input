@@ -48,6 +48,53 @@ impl Lexicon {
             .collect()
     }
 
+    /// Returns `(text, suffix)` pairs for `prefix`:
+    /// exact matches first (`suffix == ""`), followed by top candidates from longer keys
+    /// starting with `prefix` (ordered by shortest suffix length first).
+    pub fn collect_candidates_with_predictions(
+        prefix: &str,
+        max_per_extension: usize,
+    ) -> Vec<(String, String)> {
+        let mut results = Vec::new();
+        let exact_count = Self::lookup_count(prefix);
+        for i in 0..exact_count {
+            if let Some(s) = Self::get_candidate_string(prefix, i) {
+                results.push((s, String::new()));
+            }
+        }
+
+        // Only expand alphabetic prefixes for predictive completions
+        if prefix.is_empty() || !prefix.bytes().all(|b| b.is_ascii_lowercase()) {
+            return results;
+        }
+
+        let start_idx = generated::KEY_RECORDS.partition_point(|r| r.0 < prefix);
+        let mut extensions: Vec<(&'static str, u16)> = Vec::new();
+        for &(k, _start, count) in &generated::KEY_RECORDS[start_idx..] {
+            if !k.starts_with(prefix) {
+                break;
+            }
+            if k.len() > prefix.len() && k.bytes().all(|b| b.is_ascii_lowercase()) {
+                extensions.push((k, count));
+            }
+        }
+
+        // Shortest suffix first (1-char completions before 2-char, etc.), then key order
+        extensions.sort_by_key(|&(k, _)| (k.len(), k));
+
+        for (ext_key, count) in extensions {
+            let suffix = ext_key[prefix.len()..].to_string();
+            let take_n = (count as usize).min(max_per_extension);
+            for i in 0..take_n {
+                if let Some(s) = Self::get_candidate_string(ext_key, i) {
+                    results.push((s, suffix.clone()));
+                }
+            }
+        }
+
+        results
+    }
+
     /// Total number of unique keys in the compiled lexicon.
     pub fn key_count() -> usize {
         generated::KEY_RECORDS.len()

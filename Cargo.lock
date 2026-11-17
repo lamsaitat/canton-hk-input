@@ -4,25 +4,25 @@ version = 4
 
 [[package]]
 name = "canton-cli"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "canton-core",
 ]
 
 [[package]]
 name = "canton-core"
-version = "0.1.0"
+version = "0.2.0"
 
 [[package]]
 name = "canton-installer"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "windows",
 ]
 
 [[package]]
 name = "canton-tsf"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "canton-core",
  "canton-ui",
@@ -32,7 +32,7 @@ dependencies = [
 
 [[package]]
 name = "canton-ui"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "canton-core",
  "windows",

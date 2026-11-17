@@ -73,10 +73,15 @@ fn print_page(page: &canton_core::CandidatePage) {
     );
     for (idx, item) in page.items.iter().enumerate() {
         let label = if idx == 9 { 0 } else { idx + 1 };
-        if idx == page.selected_in_page {
-            print!("[{}.{}] ", label, item);
+        let display = if item.suffix.is_empty() {
+            item.text.clone()
         } else {
-            print!("{}.{} ", label, item);
+            format!("{} {}", item.suffix, item.text)
+        };
+        if idx == page.selected_in_page {
+            print!("[{}.{}] ", label, display);
+        } else {
+            print!("{}.{} ", label, display);
         }
     }
     println!();

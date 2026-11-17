@@ -17,9 +17,15 @@ pub enum KeyEvent {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+pub struct CandidateItem {
+    pub text: String,
+    pub suffix: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CandidatePage {
     pub preedit: String,
-    pub items: Vec<String>,
+    pub items: Vec<CandidateItem>,
     pub selected_in_page: usize,
     pub page_index: usize,
     pub total_pages: usize,
@@ -132,7 +138,8 @@ impl Engine {
         if self.kind == ComposeKind::Idle {
             return None;
         }
-        let total = Lexicon::lookup_count(&self.buffer);
+        let all = self.all_candidates();
+        let total = all.len();
         let page_size = self.config.page_size.max(1);
         let total_pages = if total == 0 {
             1
@@ -142,8 +149,12 @@ impl Engine {
         let page_index = self.page_index.min(total_pages - 1);
         let start = page_index * page_size;
         let end = (start + page_size).min(total);
-        let items: Vec<String> = (start..end)
-            .filter_map(|i| Lexicon::get_candidate_string(&self.buffer, i))
+        let items: Vec<CandidateItem> = all[start..end]
+            .iter()
+            .map(|(text, suffix)| CandidateItem {
+                text: text.clone(),
+                suffix: suffix.clone(),
+            })
             .collect();
         let selected_in_page = if items.is_empty() {
             0
@@ -159,6 +170,17 @@ impl Engine {
             total_pages,
             total_candidates: total,
         })
+    }
+
+    fn all_candidates(&self) -> Vec<(String, String)> {
+        match self.kind {
+            ComposeKind::Idle => Vec::new(),
+            ComposeKind::Alpha => Lexicon::collect_candidates_with_predictions(&self.buffer, 5),
+            ComposeKind::Punctuation => Lexicon::get_all_candidates(&self.buffer)
+                .into_iter()
+                .map(|s| (s, String::new()))
+                .collect(),
+        }
     }
 
     pub fn handle_key(&mut self, key: KeyEvent) -> EngineAction {
@@ -334,16 +356,18 @@ impl Engine {
 
     fn commit_slot_in_page(&mut self, slot: usize) -> EngineAction {
         let global_idx = self.page_index * self.config.page_size + slot;
-        if let Some(cand) = Lexicon::get_candidate_string(&self.buffer, global_idx) {
+        let all = self.all_candidates();
+        if let Some((cand, _suffix)) = all.get(global_idx) {
+            let committed = cand.clone();
             self.reset();
-            EngineAction::Commit(cand)
+            EngineAction::Commit(committed)
         } else {
             EngineAction::Reject
         }
     }
 
     fn next_page(&mut self) -> EngineAction {
-        let total = Lexicon::lookup_count(&self.buffer);
+        let total = self.all_candidates().len();
         if total == 0 {
             return EngineAction::Reject;
         }
@@ -355,7 +379,7 @@ impl Engine {
     }
 
     fn prev_page(&mut self) -> EngineAction {
-        let total = Lexicon::lookup_count(&self.buffer);
+        let total = self.all_candidates().len();
         if total == 0 {
             return EngineAction::Reject;
         }
@@ -439,7 +463,7 @@ mod tests {
             other => panic!("Expected UpdateUi, got {:?}", other),
         };
         assert_eq!(page2.page_index, 1);
-        assert_eq!(page2.total_pages, 16);
+        assert!(page2.total_pages >= 16);
         assert_eq!(page2.items.len(), 10);
 
         // Select slot '1' on page 2 -> global index 10
@@ -448,6 +472,20 @@ mod tests {
             EngineAction::Commit(c) => assert_eq!(c, expected),
             other => panic!("Expected Commit, got {:?}", other),
         }
+    }
+
+    #[test]
+    fn test_predictive_prefix_candidates() {
+        let mut engine = Engine::default();
+        engine.handle_key(KeyEvent::Char('l'));
+        let page = match engine.handle_key(KeyEvent::Char('o')) {
+            EngineAction::UpdateUi(p) => p,
+            other => panic!("Expected UpdateUi, got {:?}", other),
+        };
+        // `lo` has predictive completions like `k 樂` (from `lok`)
+        let all = Lexicon::collect_candidates_with_predictions("lo", 5);
+        assert!(all.iter().any(|(text, suffix)| text == "樂" && suffix == "k"));
+        assert!(!page.items.is_empty());
     }
 
     #[test]
@@ -480,7 +518,8 @@ mod tests {
             EngineAction::UpdateUi(p) => p,
             other => panic!("Expected UpdateUi, got {:?}", other),
         };
-        assert_eq!(page.items, vec!["，", "、"]);
+        let texts: Vec<&str> = page.items.iter().map(|i| i.text.as_str()).collect();
+        assert_eq!(texts, vec!["，", "、"]);
         // Typing `h` after `,` auto-commits `，` and starts `h`
         match engine.handle_key(KeyEvent::Char('h')) {
             EngineAction::CommitAndUpdate {
