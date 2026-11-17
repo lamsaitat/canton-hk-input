@@ -1,0 +1,8 @@
+[package]
+name = "canton-ui"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+canton-core = { path = "../canton-core" }
+windows = { workspace = true }

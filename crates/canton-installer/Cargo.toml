@@ -1,0 +1,7 @@
+[package]
+name = "canton-installer"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+windows = { workspace = true }

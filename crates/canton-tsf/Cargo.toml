@@ -1,0 +1,14 @@
+[package]
+name = "canton-tsf"
+version.workspace = true
+edition.workspace = true
+
+[lib]
+name = "canton_ime"
+crate-type = ["cdylib"]
+
+[dependencies]
+canton-core = { path = "../canton-core" }
+canton-ui = { path = "../canton-ui" }
+windows = { workspace = true }
+windows-core = "0.58"

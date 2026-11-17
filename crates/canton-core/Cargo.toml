@@ -1,0 +1,6 @@
+[package]
+name = "canton-core"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]

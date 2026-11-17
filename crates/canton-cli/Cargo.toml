@@ -1,0 +1,7 @@
+[package]
+name = "canton-cli"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+canton-core = { path = "../canton-core" }

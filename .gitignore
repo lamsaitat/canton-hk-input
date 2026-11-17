@@ -1,0 +1,6 @@
+/target/
+/dist/
+*.cin
+*.dll
+*.exe
+*.old.*
