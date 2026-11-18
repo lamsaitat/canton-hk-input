@@ -2,6 +2,24 @@
 
 A lightweight, native Windows 10 and Windows 11 Cantonese phonetic Input Method Engine (IME) built on the **Windows Text Services Framework (TSF / `msctf.dll`)** in Rust. Designed to behave like Microsoft's built-in system IMEs across Win32 desktop apps, UWP/WinUI 3 apps, and the Windows 11 Shell.
 
+## Romanization Scheme (Hong Kong Style vs. Jyutping)
+
+Unlike academic **Jyutping (粵拼)**, CantonHK uses **Hong Kong Government / Street-Name Romanization (港式廣東話拼音)**—the traditional, toneless, English-phonetic spelling used on Hong Kong street signs, MTR stations, and Hong Kongers' English names, with tolerant spelling variants so you can type naturally without memorizing linguistic rules:
+
+| Phrase / Word | Jyutping (粵拼) | CantonHK (港式廣東話拼音) | Notes |
+| :--- | :--- | :--- | :--- |
+| **粵拼** | `jyut6 ping3` | **`yuet` `ping`** | `y` instead of `j`, `ue` instead of `yu`, no tones |
+| **香港** | `hoeng1 gong2` | **`heung` `gong`** *(also **`hong` `kong`**)* | `eu` instead of `oe`, plus literal `hong kong` |
+| **長沙灣** | `coeng4 saa1 waan1` | **`cheung` `sha` `waan`** *(or `wan`)* | `ch` instead of `c`, `sh` instead of `s` — matches street/MTR signs |
+| **尖沙咀** | `zim1 saa1 zeoi2` | **`tsim` `sha` `tsui`** *(or `jim` `sa` `jui`)* | `ts` / `j` instead of `z`, `sh` instead of `s`, `ui` instead of `eoi` |
+| **廣東** | `gwong2 dung1` | **`gwong` `dung`** *(or `gong` `dung`)* | Toneless; `gw` or relaxed `g` |
+| **張 / 楊** | `zoeng1` / `joeng4` | **`jeung`** / **`yeung`** | `j` for English *j*, `y` for English *y* |
+| **曾** | `zang1` | **`tsang`** *(also `chang`, `jang`)* | Matches the HK surname *Tsang* |
+| **書** | `syu1` | **`sue`** | `ue` instead of `yu` |
+| **車 / 茶** | `ce1` / `caa4` | **`che`** / **`cha`** *(also `chah`, `char`)* | `ch` instead of `c`, plus casual `-h`/`-r` spellings |
+| **我 / 咗** | `ngo5` / `zo2` | **`ngoh` / `ngor`**, **`joh` / `jor`** | Tolerant `-oh` / `-or` endings |
+| **一** | `jat1` | **`yat`** | `y` instead of `j` |
+
 ## Features
 
 - **Native Windows 10/11 TSF Integration (`canton-tsf`):**
