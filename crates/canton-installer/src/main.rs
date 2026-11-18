@@ -21,6 +21,7 @@ use windows::Win32::UI::WindowsAndMessaging::{
 
 const CREATE_NO_WINDOW: u32 = 0x0800_0000;
 const EMBEDDED_DLL_X64: &[u8] = include_bytes!("../../../dist/x64/canton_ime.dll");
+const EMBEDDED_DLL_X86: &[u8] = include_bytes!("../../../dist/x86/canton_ime.dll");
 
 const INSTALL_DIR: &str = r"C:\Program Files\CantonHK";
 const UNINSTALL_REG_KEY: &str =
@@ -113,22 +114,32 @@ fn main() {
 fn perform_install(silent: bool) -> Result<(), String> {
     let install_root = PathBuf::from(INSTALL_DIR);
     let x64_dir = install_root.join("x64");
-    let dll_path = x64_dir.join("canton_ime.dll");
+    let x86_dir = install_root.join("x86");
+    let dll_x64 = x64_dir.join("canton_ime.dll");
+    let dll_x86 = x86_dir.join("canton_ime.dll");
     let uninstaller_path = install_root.join("Uninstall.exe");
 
     // Unregister any existing installation first
-    if dll_path.exists() {
-        let _ = run_regsvr32(&dll_path, true);
-        remove_or_rename_locked(&dll_path);
+    if dll_x64.exists() {
+        let _ = run_regsvr32(&dll_x64, true, false);
+        remove_or_rename_locked(&dll_x64);
     }
-    let ico_path = install_root.join("x64").join("cantonhk.ico");
-    if ico_path.exists() {
-        let _ = fs::remove_file(&ico_path);
+    if dll_x86.exists() {
+        let _ = run_regsvr32(&dll_x86, true, true);
+        remove_or_rename_locked(&dll_x86);
+    }
+    for ico in [x64_dir.join("cantonhk.ico"), x86_dir.join("cantonhk.ico")] {
+        if ico.exists() {
+            let _ = fs::remove_file(&ico);
+        }
     }
 
-    fs::create_dir_all(&x64_dir).map_err(|e| format!("Failed to create install folder: {e}"))?;
-    fs::write(&dll_path, EMBEDDED_DLL_X64)
-        .map_err(|e| format!("Failed to write canton_ime.dll: {e}"))?;
+    fs::create_dir_all(&x64_dir).map_err(|e| format!("Failed to create x64 folder: {e}"))?;
+    fs::create_dir_all(&x86_dir).map_err(|e| format!("Failed to create x86 folder: {e}"))?;
+    fs::write(&dll_x64, EMBEDDED_DLL_X64)
+        .map_err(|e| format!("Failed to write x64 canton_ime.dll: {e}"))?;
+    fs::write(&dll_x86, EMBEDDED_DLL_X86)
+        .map_err(|e| format!("Failed to write x86 canton_ime.dll: {e}"))?;
 
     if let Ok(self_exe) = std::env::current_exe() {
         if self_exe != uninstaller_path {
@@ -139,8 +150,9 @@ fn perform_install(silent: bool) -> Result<(), String> {
     // Grant AppContainer / UWP / Windows 11 Shell Read & Execute permissions
     grant_appcontainer_acl(&install_root)?;
 
-    // Register 64-bit TSF COM server
-    run_regsvr32(&dll_path, false)?;
+    // Register 64-bit and 32-bit TSF COM servers
+    run_regsvr32(&dll_x64, false, false)?;
+    run_regsvr32(&dll_x86, false, true)?;
 
     // Register Add/Remove Programs entry
     let _ = write_uninstall_registry(&install_root, &uninstaller_path);
@@ -159,16 +171,25 @@ fn perform_install(silent: bool) -> Result<(), String> {
 
 fn perform_uninstall(silent: bool) -> Result<(), String> {
     let install_root = PathBuf::from(INSTALL_DIR);
-    let dll_path = install_root.join("x64").join("canton_ime.dll");
+    let dll_x64 = install_root.join("x64").join("canton_ime.dll");
+    let dll_x86 = install_root.join("x86").join("canton_ime.dll");
     let uninstaller_path = install_root.join("Uninstall.exe");
 
-    if dll_path.exists() {
-        let _ = run_regsvr32(&dll_path, true);
-        remove_or_rename_locked(&dll_path);
+    if dll_x64.exists() {
+        let _ = run_regsvr32(&dll_x64, true, false);
+        remove_or_rename_locked(&dll_x64);
     }
-    let ico_path = install_root.join("x64").join("cantonhk.ico");
-    if ico_path.exists() {
-        let _ = fs::remove_file(&ico_path);
+    if dll_x86.exists() {
+        let _ = run_regsvr32(&dll_x86, true, true);
+        remove_or_rename_locked(&dll_x86);
+    }
+    for ico in [
+        install_root.join("x64").join("cantonhk.ico"),
+        install_root.join("x86").join("cantonhk.ico"),
+    ] {
+        if ico.exists() {
+            let _ = fs::remove_file(&ico);
+        }
     }
 
     delete_uninstall_registry();
@@ -186,6 +207,7 @@ fn perform_uninstall(silent: bool) -> Result<(), String> {
 
     // Remove empty directories if possible
     let _ = fs::remove_dir(install_root.join("x64"));
+    let _ = fs::remove_dir(install_root.join("x86"));
     let _ = fs::remove_dir(&install_root);
 
     if !silent {
@@ -248,9 +270,11 @@ fn grant_appcontainer_acl(dir: &Path) -> Result<(), String> {
     Ok(())
 }
 
-fn run_regsvr32(dll_path: &Path, unregister: bool) -> Result<(), String> {
+fn run_regsvr32(dll_path: &Path, unregister: bool, wow64_x86: bool) -> Result<(), String> {
     let sys_root = std::env::var("SystemRoot").unwrap_or_else(|_| r"C:\Windows".to_string());
-    let regsvr = PathBuf::from(sys_root).join("System32").join("regsvr32.exe");
+    let regsvr = PathBuf::from(sys_root)
+        .join(if wow64_x86 { "SysWOW64" } else { "System32" })
+        .join("regsvr32.exe");
     let mut args = vec!["/s".to_string()];
     if unregister {
         args.push("/u".to_string());
