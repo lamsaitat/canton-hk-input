@@ -570,6 +570,7 @@ impl ITfEditSession_Impl for EditSession_Impl {
                     let w: Vec<u16> = page.preedit.encode_utf16().collect();
                     range.SetText(ec, 0, &w)?;
                     apply_display_attr(ec, &self.context, &range, self.state.borrow().display_attr_atom);
+                    move_caret_to_end(ec, &self.context, &range);
                     position_and_show_ui(ec, &self.context, &range, page, &mut self.state.borrow_mut());
                 }
                 EngineAction::Commit(text) => {
@@ -579,9 +580,11 @@ impl ITfEditSession_Impl for EditSession_Impl {
                             let w: Vec<u16> = text.encode_utf16().collect();
                             let _ = range.SetText(ec, 0, &w);
                             clear_display_attr(ec, &self.context, &range);
-                            let _ = range.Collapse(ec, windows::Win32::UI::TextServices::TF_ANCHOR_END);
+                            let _ = comp.EndComposition(ec);
+                            move_caret_to_end(ec, &self.context, &range);
+                        } else {
+                            let _ = comp.EndComposition(ec);
                         }
-                        let _ = comp.EndComposition(ec);
                     } else {
                         insert_text_at_selection(ec, &self.context, text);
                     }
@@ -597,9 +600,11 @@ impl ITfEditSession_Impl for EditSession_Impl {
                             let w: Vec<u16> = committed.encode_utf16().collect();
                             let _ = range.SetText(ec, 0, &w);
                             clear_display_attr(ec, &self.context, &range);
-                            let _ = range.Collapse(ec, windows::Win32::UI::TextServices::TF_ANCHOR_END);
+                            let _ = comp.EndComposition(ec);
+                            move_caret_to_end(ec, &self.context, &range);
+                        } else {
+                            let _ = comp.EndComposition(ec);
                         }
-                        let _ = comp.EndComposition(ec);
                     } else {
                         insert_text_at_selection(ec, &self.context, committed);
                     }
@@ -607,6 +612,7 @@ impl ITfEditSession_Impl for EditSession_Impl {
                     let w: Vec<u16> = next_page.preedit.encode_utf16().collect();
                     range.SetText(ec, 0, &w)?;
                     apply_display_attr(ec, &self.context, &range, st.display_attr_atom);
+                    move_caret_to_end(ec, &self.context, &range);
                     position_and_show_ui(ec, &self.context, &range, next_page, &mut st);
                 }
                 EngineAction::Cancel => {
@@ -645,14 +651,30 @@ unsafe fn ensure_composition(
     Ok(comp_range)
 }
 
+unsafe fn move_caret_to_end(ec: u32, context: &ITfContext, range: &ITfRange) {
+    if let Ok(end_range) = range.Clone() {
+        let _ = end_range.Collapse(ec, windows::Win32::UI::TextServices::TF_ANCHOR_END);
+        let sel = windows::Win32::UI::TextServices::TF_SELECTION {
+            range: std::mem::ManuallyDrop::new(Some(end_range)),
+            style: windows::Win32::UI::TextServices::TF_SELECTIONSTYLE {
+                ase: windows::Win32::UI::TextServices::TF_AE_NONE,
+                fInterimChar: BOOL(0),
+            },
+        };
+        let _ = context.SetSelection(ec, &[sel]);
+    }
+}
+
 unsafe fn insert_text_at_selection(ec: u32, context: &ITfContext, text: &str) {
     if let Ok(insert_sel) = context.cast::<windows::Win32::UI::TextServices::ITfInsertAtSelection>() {
         let w: Vec<u16> = text.encode_utf16().collect();
-        let _ = insert_sel.InsertTextAtSelection(
+        if let Ok(range) = insert_sel.InsertTextAtSelection(
             ec,
             windows::Win32::UI::TextServices::INSERT_TEXT_AT_SELECTION_FLAGS(0),
             &w,
-        );
+        ) {
+            move_caret_to_end(ec, context, &range);
+        }
     }
 }
 
