@@ -2,9 +2,6 @@
 
 A lightweight, native Windows 10 and Windows 11 Cantonese phonetic Input Method Engine (IME) built on the **Windows Text Services Framework (TSF / `msctf.dll`)** in Rust. Designed to behave like Microsoft's built-in system IMEs across Win32 desktop apps, UWP/WinUI 3 apps, and the Windows 11 Shell.
 
-> [!NOTE]
-> **Bring Your Own `.cin` Table:** No `.cin` dictionary file or compiled binary is included in this repository. Place your own `cantonhk.cin` table in the repository root before building.
-
 ## Features
 
 - **Native Windows 10/11 TSF Integration (`canton-tsf`):**
@@ -43,7 +40,7 @@ A lightweight, native Windows 10 and Windows 11 Cantonese phonetic Input Method 
 
 ### Prerequisites
 - Rust (`stable-x86_64-pc-windows-gnu` toolchain)
-- A `cantonhk.cin` file placed at the repository root (`.\cantonhk.cin`)
+- `cantonhk.cin` (included in the repository root)
 
 ### Build & Test
 ```powershell
