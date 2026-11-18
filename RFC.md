@@ -2,7 +2,7 @@
 
 - **Status:** Accepted / Ready for Implementation
 - **Target Audience:** Autonomous LLM Coding Agents, Vibe-Coding Sessions, and Systems Engineers
-- **Primary Input Asset:** `C:\Users\kuro\Dev\canton-im\cantonhk.cin`
+- **Primary Input Asset:** `C:\Users\kuro\Dev\canton-im\assets\cantonhk.cin`
 - **Target OS:** Windows 10 (1809+) and Windows 11 (21H2–24H2+), x64 & x86 (with ARM64 portability)
 - **Subsystem:** Windows Text Services Framework (TSF / `msctf.dll`) In-Process COM DLL + Direct2D/DirectWrite UI
 

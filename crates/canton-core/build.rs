@@ -11,6 +11,7 @@ fn main() {
         .unwrap()
         .parent()
         .unwrap()
+        .join("assets")
         .join("cantonhk.cin");
 
     println!("cargo:rerun-if-changed={}", cin_path.display());

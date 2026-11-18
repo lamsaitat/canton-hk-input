@@ -42,6 +42,8 @@ Unlike academic **Jyutping (粵拼)**, CantonHK uses **Hong Kong Government / St
 ```text
 ├── RFC.md                      # Architecture & Strategic Decision Register
 ├── Cargo.toml                  # Rust workspace manifest
+├── assets/
+│   └── cantonhk.cin            # CantonHK phonetic table
 ├── crates/
 │   ├── canton-core/            # Pure state machine & build-time .cin compiler
 │   ├── canton-ui/              # Direct2D / DirectWrite floating candidate window
@@ -58,7 +60,7 @@ Unlike academic **Jyutping (粵拼)**, CantonHK uses **Hong Kong Government / St
 
 ### Prerequisites
 - Rust (`stable-x86_64-pc-windows-gnu` toolchain)
-- `cantonhk.cin` (included in the repository root)
+- `assets/cantonhk.cin` (included in the repository)
 
 ### Build & Test
 ```powershell
